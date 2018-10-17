@@ -5,4 +5,85 @@ http://book.fulcrologic.com[Fulcro Developer's Guide], and
 demonstrates setting up network-layer security for both
 normal remotes and websockets.
 
-Please read the book for more details.
+Please see the book for more details.
+
+
+=== Running
+
+This is a shadow-cljs project:
+
+```
+$ npm install
+$ npx shadow-cljs watch main
+```
+
+Then run a REPL:
+
+```
+$ lein repl
+user=> (start)
+```
+
+This will start in development mode (no SSL redirect).
+
+=== Production Mode
+
+```
+$ lein uberjar
+$ (cd target; java -jar security_demo.jar)
+```
+
+but you'll need a proxy server like nginx with SSL in front of it.  If you
+general a self-signed cert and put the files in your nginx folder, then
+something like this should work:
+
+```
+    server {
+       listen 80;
+       server_name 127.0.0.1;
+
+       location / {
+            proxy_pass http://localhost:8080;
+      proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+       }
+    }
+
+    server {
+       listen 443 http2 ssl;
+       server_name 127.0.0.1;
+
+        ssl_certificate      ssl/server.crt;
+        ssl_certificate_key  ssl/server.key;
+        ssl_dhparam          ssl/dhparam.pem;
+
+       location / {
+            proxy_pass http://localhost:8080;
+      proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+       }
+    }
+```
+
+NOTE: For my quick tests I did an insecure thing and put self-signed ssl files in
+/usr/local/etc/nginx/ssl.  The above file was in
+`/usr/local/etc/nginx/servers/security-demo/conf`.
+
+You'll have to run `nginx` via sudo to use the restricted ports:
+
+```
+$ sudo nginx
+```
+
+Of course you'll still get a big fat warning from the browser that the cert is
+bad, but you'll be able to test the app to see it working and forcing redirects.
