@@ -5,7 +5,7 @@
 
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [thheller/shadow-cljs "2.6.12"]
-                 [fulcrologic/fulcro "2.6.8-SNAPSHOT"]
+                 [fulcrologic/fulcro "2.6.8"]
                  [com.taoensso/timbre "4.10.0"]
                  [clj-time "0.15.0"]
                  [hiccup "1.0.5"]
