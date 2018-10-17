@@ -1,0 +1,1 @@
+{:ring.middleware/defaults-config {:security {:ssl-redirect false}}}
