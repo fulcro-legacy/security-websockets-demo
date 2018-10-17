@@ -1,9 +1,7 @@
 (ns security-demo.client
   (:require [fulcro.client :as fc]
-            [fulcro.client.network :as net]
-            [security-demo.ui.root :as root]
-            [fulcro.i18n :as i18n]
-            ["intl-messageformat" :as IntlMessageFormat]))
+            [fulcro.websockets :as fws]
+            [security-demo.ui.root :as root]))
 
 (defonce app (atom nil))
 
@@ -13,13 +11,18 @@
 (defn start []
   (mount))
 
-(def secured-request-middleware
-  (->
-    (net/wrap-csrf-token identity (or js/fulcro_network_csrf_token "TOKEN-NOT-IN-HTML!"))
-    (net/wrap-fulcro-request)))
+(defn push-handler [msg] (js/console.log "Push received" msg))
 
 (defn ^:export init []
-  (reset! app (fc/new-fulcro-client
-                :networking {:remote (net/fulcro-http-remote {:url                "/api"
-                                                              :request-middleware secured-request-middleware})}))
+  (reset! app
+    (fc/new-fulcro-client
+      :networking {:remote
+                   (fws/make-websocket-networking
+                     {:websockets-uri "/chsk"
+                      :push-handler   push-handler
+                      ;; we use these instead of Sente's ajax-options (which would be nice for setting headers)
+                      ;; because sente doesn't use those for the initial socket ping.
+                      ;; Not ideal, since the CSRF token might end up stored in browser caches, proxy servers, etc.
+                      :req-params     {:csrf-token (or js/fulcro_network_csrf_token "TOKEN-NOT-IN-HTML!")}
+                      :auto-retry?    true})}))
   (start))

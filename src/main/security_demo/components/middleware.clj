@@ -12,9 +12,8 @@
     [security-demo.api.mutations]                           ;; ensure reads/mutations are loaded
     [security-demo.api.read]
     [security-demo.components.config :refer [config]]
-    [security-demo.components.server-parser :refer [server-parser]]
-    [taoensso.timbre :as timbre]
-    [clojure.string :as str]))
+    [security-demo.components.websockets :refer [websockets]]
+    [taoensso.timbre :as timbre]))
 
 (def ^:private not-found-handler
   (fn [_]
@@ -22,15 +21,37 @@
      :headers {"Content-Type" "text/plain"}
      :body    "NOPE"}))
 
-(defn wrap-api [handler]
-  (fn [request]
-    (if (= "/api" (:uri request))
-      (server/handle-api-request
-        server-parser
-        ;; this map is `env`. Put other defstate things in this map and they'll be in the mutations/query env on server.
-        {:config config}
-        (:transit-params request))
-      (handler request))))
+(defn- is-wsrequest? [{:keys [uri]}] (= "/chsk" uri))
+
+(defn enforce-csrf!
+  "Checks the CSRF token. If it is ok, runs the `ok-response-handler`; otherwise returns a 403 response
+  and logs the CSRF violation."
+  [{:keys [anti-forgery-token params]} ok-response-handler]
+  (let [{:keys [csrf-token]} params
+        token-matches? (and (seq csrf-token) (= csrf-token anti-forgery-token))]
+    (timbre/debug "Setting up websocket request. Incoming security token is: " csrf-token)
+    (timbre/debug "Expected CSRF token is " anti-forgery-token)
+    (if token-matches?
+      (ok-response-handler)
+      (do
+        (timbre/error "CSRF FAILURE. The token received does not match the expected value.")
+        (-> (response/response "Cross site requests are not supported.")
+          (response/status 403))))))
+
+(defn wrap-websockets
+  "Add websocket middleware.  This middleware does a CSRF check on the GET (normal Ring only checks POSTS)
+  to ensure we don't start a Sente handshake unless the client has already proven it knows the CSRF token."
+  [base-request-handler]
+  (fn [{:keys [request-method] :as req}]
+    (if (is-wsrequest? req)
+      (let [{:keys [ring-ajax-post ring-ajax-get-or-ws-handshake]} websockets]
+        ;; The enforcement is really on GET, which ring's middleware won't block,
+        ;; but which exposes the token in the handshake
+        (enforce-csrf! req (fn []
+                             (case request-method
+                               :get (ring-ajax-get-or-ws-handshake req)
+                               :post (ring-ajax-post req)))))
+      (base-request-handler req))))
 
 (defn generate-index [{:keys [anti-forgery-token]}]
   (timbre/info "Embedding CSRF token in index page")
@@ -62,7 +83,7 @@
     (when-not (get-in defaults-config [:security :ssl-redirect])
       (timbre/warn "SSL IS NOT ENFORCED: YOU ARE RUNNING IN AN INSECURE MODE (only ok for development)"))
     (-> not-found-handler
-      wrap-api
+      wrap-websockets
       server/wrap-transit-params
       server/wrap-transit-response
       (server/wrap-protect-origins {:allow-when-origin-missing? false

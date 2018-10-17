@@ -1,5 +1,5 @@
-(defproject security-demo "0.1.0-SNAPSHOT"
-  :description "My Cool Project"
+(defproject websocket-security-demo "0.1.0-SNAPSHOT"
+  :description "Websocket security demo"
   :license {:name "MIT" :url "https://opensource.org/licenses/MIT"}
   :min-lein-version "2.7.0"
 
@@ -9,6 +9,7 @@
                  [com.taoensso/timbre "4.10.0"]
                  [clj-time "0.15.0"]
                  [hiccup "1.0.5"]
+                 [com.taoensso/sente "1.13.1"]
 
                  [http-kit "2.3.0"]
                  [ring/ring-defaults "0.3.2"]
