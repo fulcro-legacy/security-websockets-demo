@@ -56,7 +56,7 @@
 (defstate middleware
   :start
   (let [defaults-config (:ring.middleware/defaults-config config)
-        legal-origins   (get config :ring.cors/legal-origins #{"localhost"})]
+        legal-origins   (get config :legal-origins #{"localhost"})]
     (timbre/debug "Configuring middleware-defaults with" (with-out-str (pprint defaults-config)))
     (timbre/info "Restricting origins to " legal-origins)
     (when-not (get-in defaults-config [:security :ssl-redirect])
@@ -65,11 +65,8 @@
       wrap-api
       server/wrap-transit-params
       server/wrap-transit-response
-      (wrap-cors
-        ;; Fulcro only needs POST
-        :access-control-allow-methods [:post]
-        ;; CORS allows a fn, and Fulcro has one that allows a set of hostname strings.
-        :access-control-allow-origin #(server/legal-origin? % legal-origins false))
+      (server/wrap-protect-origins {:allow-when-origin-missing? false
+                                    :legal-origins              legal-origins})
       (wrap-uris {"/"           generate-index
                   "/index.html" generate-index})
       (wrap-defaults defaults-config)

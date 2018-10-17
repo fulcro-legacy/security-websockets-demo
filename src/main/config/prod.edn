@@ -1,1 +1,2 @@
-{:http-kit/config {:port 8080}}
+{:http-kit/config                 {:port 8080}
+ :ring.middleware/defaults-config {:proxy true}}

@@ -1,7 +1,7 @@
 {:http-kit/config
  {:port 3000}
 
- :ring.cors/legal-origins
+ :legal-origins
  #{"localhost" "security-demo.lvh.me"}
 
  :ring.middleware/defaults-config
