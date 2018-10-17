@@ -8,9 +8,11 @@
                  [fulcrologic/fulcro "2.6.8-SNAPSHOT"]
                  [com.taoensso/timbre "4.10.0"]
                  [clj-time "0.15.0"]
+                 [hiccup "1.0.5"]
 
                  [http-kit "2.3.0"]
                  [ring/ring-defaults "0.3.2"]
+                 [ring-cors "0.1.12"]
                  [bk/ring-gzip "0.2.1"]
                  [mount "0.1.12"]]
 

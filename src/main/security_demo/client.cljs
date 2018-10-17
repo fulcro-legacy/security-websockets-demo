@@ -1,13 +1,9 @@
 (ns security-demo.client
   (:require [fulcro.client :as fc]
+            [fulcro.client.network :as net]
             [security-demo.ui.root :as root]
             [fulcro.i18n :as i18n]
             ["intl-messageformat" :as IntlMessageFormat]))
-
-(defn message-format [{:keys [::i18n/localized-format-string ::i18n/locale ::i18n/format-options]}]
-  (let [locale-str (name locale)
-        formatter  (IntlMessageFormat. localized-format-string locale-str)]
-    (.format formatter (clj->js format-options))))
 
 (defonce app (atom nil))
 
@@ -17,9 +13,13 @@
 (defn start []
   (mount))
 
+(def secured-request-middleware
+  (->
+    (net/wrap-csrf-token identity (or js/fulcro_network_csrf_token "TOKEN-NOT-IN-HTML!"))
+    (net/wrap-fulcro-request)))
+
 (defn ^:export init []
   (reset! app (fc/new-fulcro-client
-                     :reconciler-options {:shared    {::i18n/message-formatter message-format}
-                                          :render-mode :keyframe ; Good for beginners. Remove to optimize UI refresh
-                                          :shared-fn ::i18n/current-locale}))
+                :networking {:remote (net/fulcro-http-remote {:url                "/api"
+                                                              :request-middleware secured-request-middleware})}))
   (start))

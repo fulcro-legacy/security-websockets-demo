@@ -1,20 +1,24 @@
-{:http-kit/config {:port 3000}
+{:http-kit/config
+ {:port 3000}
+
+ :ring.cors/legal-origins
+ #{"localhost" "security-demo.lvh.me"}
+
  :ring.middleware/defaults-config
-                  {:params    {:keywordize true
-                               :multipart  true
-                               :nested     true
-                               :urlencoded true}
-                   :cookies   true
-                   :responses {:absolute-redirects     true
-                               :content-types          true
-                               :default-charset        "utf-8"
-                               :not-modified-responses true}
-                   :session   {:cookie-attrs {:http-only true, :same-site :strict}}
-                   :static    {:resources "public"}
-                   :security  {:anti-forgery         true
-                               :hsts                 true
-                               :ssl-redirect         true
-                               :frame-options        :deny
-                               :xss-protection       {:enable? true
-                                                      :mode    :block}
-                               :content-type-options :nosniff}}}
+ {:params    {:keywordize true
+              :multipart  true
+              :nested     true
+              :urlencoded true}
+  :cookies   true
+  :responses {:absolute-redirects     true
+              :content-types          true
+              :default-charset        "utf-8"
+              :not-modified-responses true}
+  :session   {:cookie-attrs {:http-only true, :same-site :strict}}
+  :static    {:resources "public"}
+  :security  {:anti-forgery   true
+              :hsts           true
+              :ssl-redirect   true
+              :frame-options  :deny
+              :xss-protection {:enable? true
+                               :mode    :block}}}}
