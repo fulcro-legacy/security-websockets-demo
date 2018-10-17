@@ -1,0 +1,6 @@
+== Fulcro Security Demo
+
+This source code goes with the Security chapter of the
+http://book.fulcrologic.com[Fulcro Developer's Guide], and
+demonstrates setting up network-layer security for both
+normal remotes and websockets.
